@@ -7,6 +7,7 @@ import Navigation from '@components/Base/Navigation.astro';
 import Button from '@components/Base/Button.astro';
 import Modal from '@components/Base/Modal.astro';
 import Heading from '@components/Base/Heading.astro';
+import CustomDropdown from '@components/Base/CustomDropdown.astro';
 ---
 
 <header class='bg-brand-orange-800 text-white'>
@@ -114,21 +115,17 @@ import Heading from '@components/Base/Heading.astro';
         </div>
 
         <div class='sm:col-span-1'>
-          <label
-            for='company-size'
-            class='block text-sm font-light text-brand-gray-500'
-          >
-            Size of the company (optional)
-          </label>
-          <select
+          <CustomDropdown
             id='company-size'
             name='company-size'
-            class='form-select mt-1 block w-full rounded border-brand-gray-100 bg-brand-blue-bg p-4 pr-3 pt-3.5 text-brand-gray-900 placeholder:text-brand-gray-500 focus:border-brand-orange-900 focus:ring-brand-orange-900'
-          >
-            <option value=''>Select size</option>
-            <option value='More than 1000'>More than 1000</option>
-            <option value='Less than 1000'>Less than 1000</option>
-          </select>
+            label='Size of the company (optional)'
+            placeholder='Select size'
+            options={[
+              { value: '', label: 'Select size' },
+              { value: 'More than 1000', label: 'More than 1000' },
+              { value: 'Less than 1000', label: 'Less than 1000' },
+            ]}
+          />
         </div>
 
         <div class='sm:col-span-1'>

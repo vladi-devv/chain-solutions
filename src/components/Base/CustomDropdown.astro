@@ -1,0 +1,255 @@
+---
+export interface Props {
+  id: string;
+  name: string;
+  label: string;
+  placeholder?: string;
+  options: { value: string; label: string }[];
+  required?: boolean;
+  class?: string;
+}
+
+const {
+  id,
+  name,
+  label,
+  placeholder = 'Select an option',
+  options,
+  required = false,
+  class: className = '',
+} = Astro.props;
+---
+
+<div class={`custom-dropdown-container ${className}`}>
+  <label for={id} class='block text-sm font-light text-brand-gray-500'>
+    {label}
+  </label>
+
+  <div class='relative mt-1'>
+    <!-- Hidden input to store the actual value for form submission -->
+    <input type='hidden' id={id} name={name} required={required} />
+
+    <!-- Custom dropdown button -->
+    <button
+      type='button'
+      class='custom-dropdown-trigger relative w-full cursor-pointer rounded border border-brand-gray-100 bg-brand-blue-bg p-4 pr-10 pt-3.5 text-left text-brand-gray-900 transition-all duration-200 hover:border-brand-orange-500 focus:border-brand-orange-900 focus:outline-none focus:ring-1 focus:ring-brand-orange-900'
+      data-dropdown-id={id}
+    >
+      <span
+        class='dropdown-selected-text block truncate font-light text-brand-gray-500'
+      >
+        {placeholder}
+      </span>
+      <span
+        class='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4'
+      >
+        <svg
+          class='dropdown-arrow text-brand-gray-400 h-5 w-5 transition-transform duration-200'
+          viewBox='0 0 20 20'
+          fill='currentColor'
+        >
+          <path
+            fill-rule='evenodd'
+            d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'
+            clip-rule='evenodd'></path>
+        </svg>
+      </span>
+    </button>
+
+    <!-- Dropdown options -->
+    <div
+      class='custom-dropdown-menu absolute z-50 mt-1 hidden w-full overflow-hidden rounded-md border border-brand-gray-100 bg-white shadow-lg'
+      data-dropdown-menu={id}
+    >
+      <div class='max-h-60 overflow-auto py-1'>
+        {
+          options.map(option => (
+            <button
+              type='button'
+              class='dropdown-option relative w-full cursor-pointer px-4 py-3 text-left text-sm font-light text-brand-gray-900 transition-colors duration-150 hover:bg-brand-orange-500/10 hover:text-brand-orange-900 focus:bg-brand-orange-500/10 focus:text-brand-orange-900 focus:outline-none'
+              data-value={option.value}
+              data-dropdown-id={id}
+            >
+              <span class='block truncate'>{option.label}</span>
+              <span class='dropdown-checkmark absolute inset-y-0 right-0 hidden items-center pr-4 text-brand-orange-900'>
+                <svg class='h-5 w-5' viewBox='0 0 20 20' fill='currentColor'>
+                  <path
+                    fill-rule='evenodd'
+                    d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                    clip-rule='evenodd'
+                  />
+                </svg>
+              </span>
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .custom-dropdown-trigger[aria-expanded='true'] .dropdown-arrow {
+    transform: rotate(180deg);
+  }
+
+  .custom-dropdown-trigger[aria-expanded='true'] {
+    border-color: theme('colors.brand.orange.900');
+    ring: 1px theme('colors.brand.orange.900');
+  }
+
+  .dropdown-option.selected .dropdown-checkmark {
+    display: flex;
+  }
+
+  .dropdown-option.selected {
+    background-color: rgb(
+      247 184 154 / 0.1
+    ); /* brand-orange-500 with 10% opacity */
+    color: theme('colors.brand.orange.900');
+  }
+</style>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    // Initialize all custom dropdowns
+    const dropdownTriggers = document.querySelectorAll(
+      '.custom-dropdown-trigger'
+    );
+
+    dropdownTriggers.forEach(trigger => {
+      const dropdownId = trigger.getAttribute('data-dropdown-id');
+      if (!dropdownId) return;
+
+      const menu = document.querySelector(
+        `[data-dropdown-menu="${dropdownId}"]`
+      );
+      const hiddenInput = document.getElementById(
+        dropdownId
+      ) as HTMLInputElement;
+      const selectedText = trigger.querySelector('.dropdown-selected-text');
+      const options = menu?.querySelectorAll('.dropdown-option');
+
+      if (!menu || !hiddenInput || !selectedText || !options) return;
+
+      // Toggle dropdown
+      trigger.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const isOpen = trigger.getAttribute('aria-expanded') === 'true';
+
+        // Close all other dropdowns
+        document
+          .querySelectorAll('.custom-dropdown-trigger')
+          .forEach(otherTrigger => {
+            if (otherTrigger !== trigger) {
+              otherTrigger.setAttribute('aria-expanded', 'false');
+              const otherId = otherTrigger.getAttribute('data-dropdown-id');
+              const otherMenu = document.querySelector(
+                `[data-dropdown-menu="${otherId}"]`
+              );
+              otherMenu?.classList.add('hidden');
+            }
+          });
+
+        // Toggle current dropdown
+        if (isOpen) {
+          trigger.setAttribute('aria-expanded', 'false');
+          menu.classList.add('hidden');
+        } else {
+          trigger.setAttribute('aria-expanded', 'true');
+          menu.classList.remove('hidden');
+        }
+      });
+
+      // Handle option selection
+      options.forEach(option => {
+        option.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const value = option.getAttribute('data-value') || '';
+          const label = option.textContent?.trim() || '';
+
+          // Update hidden input
+          hiddenInput.value = value;
+
+          // Update selected text
+          selectedText.textContent = label;
+          selectedText.classList.remove('text-brand-gray-500');
+          selectedText.classList.add('text-brand-gray-900');
+
+          // Update option states
+          options.forEach(opt => opt.classList.remove('selected'));
+          option.classList.add('selected');
+
+          // Close dropdown
+          trigger.setAttribute('aria-expanded', 'false');
+          menu.classList.add('hidden');
+
+          // Trigger change event for form validation
+          hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', e => {
+      const target = e.target as Element;
+      if (!target.closest('.custom-dropdown-container')) {
+        document
+          .querySelectorAll('.custom-dropdown-trigger')
+          .forEach(trigger => {
+            trigger.setAttribute('aria-expanded', 'false');
+            const dropdownId = trigger.getAttribute('data-dropdown-id');
+            const menu = document.querySelector(
+              `[data-dropdown-menu="${dropdownId}"]`
+            );
+            menu?.classList.add('hidden');
+          });
+      }
+    });
+
+    // Handle keyboard navigation
+    document.addEventListener('keydown', e => {
+      const activeDropdown = document.querySelector(
+        '.custom-dropdown-trigger[aria-expanded="true"]'
+      );
+      if (!activeDropdown) return;
+
+      const dropdownId = activeDropdown.getAttribute('data-dropdown-id');
+      const menu = document.querySelector(
+        `[data-dropdown-menu="${dropdownId}"]`
+      );
+      const options = menu?.querySelectorAll('.dropdown-option');
+
+      if (!options) return;
+
+      if (e.key === 'Escape') {
+        activeDropdown.setAttribute('aria-expanded', 'false');
+        menu?.classList.add('hidden');
+        (activeDropdown as HTMLElement).focus();
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const focusedOption = document.activeElement as Element;
+        const currentIndex = Array.from(options).indexOf(focusedOption);
+
+        let nextIndex;
+        if (e.key === 'ArrowDown') {
+          nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+        } else {
+          nextIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+        }
+
+        (options[nextIndex] as HTMLElement).focus();
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        const focusedOption = document.activeElement as Element;
+        if (focusedOption?.classList.contains('dropdown-option')) {
+          e.preventDefault();
+          (focusedOption as HTMLElement).click();
+        }
+      }
+    });
+  });
+</script>
